@@ -76,7 +76,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             log.info("The code doesn't exist or has expired");
             return Result.fail("The code doesn't exist or has expired");
         }
-
+        // todo 校验成功后，应该把这个验证码删除
         // 3. 根据手机号从库中查询用户或生成新用户
         User user = query().eq("phone", phone).one();
         // 用户不存在，创建用户并入库
