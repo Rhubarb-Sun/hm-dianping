@@ -14,10 +14,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.hmdp.utils.RedisConstants.CACHE_SHOP_LIST;
-import static com.hmdp.utils.RedisConstants.CACHE_SHOP_LIST_TTL;
 
 /**
  * <p>
@@ -56,8 +54,8 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
         }
 
         // not null, add to cache
-        stringRedisTemplate.opsForValue().set(CACHE_SHOP_LIST, JSONUtil.toJsonStr(shopTypeList),
-                CACHE_SHOP_LIST_TTL, TimeUnit.MINUTES);
+        // 店铺类型是低一致性的场景，可以借助Redis的内存淘汰机制保证低一致性。
+        stringRedisTemplate.opsForValue().set(CACHE_SHOP_LIST, JSONUtil.toJsonStr(shopTypeList));
 
         // return ok.
         return Result.ok(shopTypeList);

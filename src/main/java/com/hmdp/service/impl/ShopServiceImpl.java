@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
@@ -59,5 +60,21 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
         // 6. return ok.
         return Result.ok(shop);
+    }
+
+    @Override
+    @Transactional // 单体系统直接用事务。
+    public Result update(Shop shop) {
+        // verify the id of shop
+        if (shop.getId() == null) {
+            return Result.fail("店铺ID不能为空");
+        }
+
+        // update database
+        updateById(shop);
+
+        // delete cache
+        stringRedisTemplate.delete(CACHE_SHOP_KEY + shop.getId());
+        return Result.ok();
     }
 }
