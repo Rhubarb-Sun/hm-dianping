@@ -54,7 +54,7 @@ public class CacheClient {
         String key = keyPrefix + id;
         String json = stringRedisTemplate.opsForValue().get(key);
 
-        // 2. not null, return
+        // 2. not blank, return
         if (StrUtil.isNotBlank(json)) {
             log.info("成功从缓存中获取到了店铺 {} 的信息：{}", id, json);
             return JSONUtil.toBean(json, clazz);
