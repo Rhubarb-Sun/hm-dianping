@@ -37,13 +37,19 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         // 1. query from cache.
         // 用hash和string类型都可以。value无需修改，用string也好。
         String key = CACHE_SHOP_KEY + id;
-        String shopJson = stringRedisTemplate.opsForValue().get(key);
+        String cachedShopJson = stringRedisTemplate.opsForValue().get(key);
 
         // 2. not null, return
-        if (StrUtil.isNotBlank(shopJson)) {
-            log.info("成功从缓存中获取到了店铺 {} 的信息：{}", id, shopJson);
-            Shop cachedShop = JSONUtil.toBean(shopJson, Shop.class);
+        if (StrUtil.isNotBlank(cachedShopJson)) {
+            log.info("成功从缓存中获取到了店铺 {} 的信息：{}", id, cachedShopJson);
+            Shop cachedShop = JSONUtil.toBean(cachedShopJson, Shop.class);
             return Result.ok(cachedShop);
+        }
+
+        // 2.1 ""
+        if ("".equals(cachedShopJson)) {
+            log.info("缓存穿透解决方案");
+            return Result.fail("店铺不存在");
         }
 
         // 3. otherwise, query from database
@@ -52,6 +58,10 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         // 4. null, return fail
         if (shop == null) {
             log.info("数据库中没有店铺 {} 的信息", id);
+            // 4.1 to avoid the cache penetration,
+            // add empty to redis with a 2-min ttl when we cannot access the info from database.
+            stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
+
             return Result.fail("店铺不存在");
         }
 
